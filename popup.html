@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"> 
+<head>
+<link rel="stylesheet" type="text/css" href="css/pop_up.css" /> 
+<script type="text/javascript">
+
+var BackgroundPage = chrome.extension.getBackgroundPage();
+var objCurrentPage = BackgroundPage.objCurrentPage;
+
+function ChangeBtnState(BtnId, BtnText, overrideType, blnOverriden, localStorageValue, addOrRemove, overrideFn){
+    var btn = document.getElementById(BtnId);
+    btn.innerHTML = BtnText;
+    btn.onclick = function(){
+      objCurrentPage.manageOverride.call(this, overrideType, blnOverriden, localStorageValue, addOrRemove, overrideFn);
+      DisplayButtons();
+    };
+}
+
+function DisplayButtons(){
+    var objPageOverrides = BackgroundPage.objCurrentPage.blnOverrides;
+    var currentUrl = objCurrentPage.Url;
+    var currentDomain = objCurrentPage.Domain;
+
+    if(objPageOverrides['OverrideAll']){	    
+	    ChangeBtnState('overrideAll', 'Disable songBERG', 'OverrideAll', false, false, 'set', objCurrentPage.callRemoveCss);
+    } else {
+	    ChangeBtnState('overrideAll', 'Enable songBERG', 'OverrideAll', true, true, 'set', objCurrentPage.callInjectCss);
+    }
+}
+
+</script>
+<script>
+function click(color) {
+  chrome.tabs.executeScript(null,
+      {code:"document.location = 'http://song.detourlab.com'"});
+  window.close();
+}
+</script>
+</head>
+<body onLoad="DisplayButtons()">
+    <div>
+      <div id="overrideAll" class="action_btn" onClick=""></div>
+      <div id="visit_us" class="action_btn" onClick="click(this);">Visit songBERG Site</div>
+    </div>
+</body>
+</html>
