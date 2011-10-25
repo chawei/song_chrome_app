@@ -39,6 +39,10 @@ function injectCss() {
       max-width: 350px; \
       border-left: 1px solid #aaa; \
       z-index: 1000; \
+      color: #333; \
+    } \
+    #songberg_container #main { \
+      margin: 18px 0 0 18px; \
     } \
     #songberg_container .toggle_button, #songberg_container .message { \
       margin: 10px 0 0 20px; \
@@ -59,6 +63,22 @@ function injectCss() {
       font-family: arial, sans-serif; \
       color: #333; \
     } \
+    #songberg_container p { \
+      margin: 0 10px 20px 0; \
+      color: #666; \
+    } \
+    #songberg_container .text_field { \
+      border: 1px solid #999; \
+      outline: none; \
+      width: 90%; \
+      height: 20px; \
+      line-height: 20px; \
+      margin: 0 0 10px 0; \
+      padding: 0 5px; \
+    } \
+    .hidden { \
+      display: none; \
+    } \
     ";
   document.documentElement.insertBefore(styleElement, null);
   
@@ -78,10 +98,54 @@ function findSong() {
   if (typeof title === "string") {
     injectCss();
     console.log(document.URL);
-    $.get("http://dev.songberg.com:3000/api/v1/songs/search?query="+escape(title)+"&video_url="+document.URL, 
+    $.get("http://dev.songberg.com:3000/api/v1/songs/search?query="+encodeURI(title)+"&video_url="+document.URL, 
         function(data) {
         var jsonData = $.parseJSON(data);
-        if (jsonData.song.content == null) {
+        if (jsonData == null || jsonData.song == null) {
+          $('body').append("\
+            <div id='songberg_container'> \
+              <a class='toggle_button'>is this a song?</a> \
+              <div id='main' class='hidden'> \
+                <p>Sorry, i am not smart enough. <br> \
+                Can you tell me the artist name and the title of this song? \
+                So i can grab more info for you, thanks!</p> \
+                <form id='request_form'> \
+                  <input placeholder='Artist Name' type='text' id='input_artist_name' class='text_field'> \
+                  <input placeholder='Song Title' type='text' id='input_song_title' class='text_field'> \
+                  <input type='submit' value='send' class='submit_btn'> \
+                </form> \
+              </div> \
+            </div>");
+            
+            $('.toggle_button').toggle(
+              function() {
+                $(this).text('hide');
+                $('#songberg_container').animate({ height: '100%', width: '25%'});
+                $('#main').removeClass('hidden');
+              },
+              function() {
+                $(this).text('is this a song?');
+                $('#songberg_container').animate({ height: '0px', width: '60px'});
+                $('#main').addClass('hidden');
+              }
+            );
+            
+            $('#request_form').submit(function(){
+              var title = $('#input_artist_name').val() + ' ' + $('#input_song_title').val();
+              $.get("http://dev.songberg.com:3000/api/v1/songs/search?query="+encodeURI(title)+"&video_url="+document.URL, 
+                function(data) {
+                  var jsonData = $.parseJSON(data);
+                  
+                  if (jsonData && jsonData.song && jsonData.song.content != null) {
+                    $('#songberg_container #main').html("<pre>"+jsonData.song.content+"</pre>");
+                  } else {
+                    $('#songberg_container #main').html("<p>sorry, still can't find it.</p>");
+                  }
+                }
+              );
+              return false;
+            });
+        } else if (jsonData.song.content == null) {
           $('body').append("\
             <div id='songberg_container'> \
               <div class='message'>no lyrics</div> \
