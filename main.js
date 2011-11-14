@@ -25,6 +25,41 @@ window.addEventListener("resize", function() {
 }, false);
 
 
+var preElement;
+var preElementCss;
+/*
+document.addEventListener('mouseover', function (e) {
+  var srcElement = e.srcElement;
+  //console.log(srcElement);
+  //$(srcElement).fadeOut();
+  if ($(preElement).is('img')) {
+    $(preElement).css({"opacity": preElementCss});
+  } else {
+    $(preElement).css({"background-color": preElementCss});
+  }
+  
+  preElement    = srcElement;
+  if ($(srcElement).is('img')) {
+    preElementCss = $(srcElement).css("opacity");
+    $(srcElement).css({"opacity": 0.7});
+  } else {
+    preElementCss = $(srcElement).css("background-color");
+    $(srcElement).css({"background-color": "rgba(200, 200, 200, 0.5)"});
+  }
+
+  //var x = $(srcElement).offset().top;
+  //var y = $(srcElement).offset().left;
+  //var w = $(srcElement).width();
+  //var h = $(srcElement).height();
+  //
+  //$("#dom_overlay").remove();
+  //var overlay = $("<div id='dom_overlay'></div>");
+  //overlay.css({"position": "absolute", "width": w+"px", "height": h+"px", "top": x+"px", "left": y+"px", "background-color": "#666", "opacity": 0.3});
+  //$('body').append(overlay);
+  
+});
+*/
+
 function injectCss() {
   styleElement = document.createElement("style");
   styleElement.innerText = "\
@@ -35,19 +70,24 @@ function injectCss() {
       width: 70px; \
       height: 0px; \
       background-color: #fff; \
-      min-width: 70px; \
+      min-width: 120px; \
       max-width: 350px; \
-      border-left: 1px solid #aaa; \
+      border: none; \
       z-index: 1000; \
       color: #333; \
     } \
+    #songberg_container.styled { \
+      border-left: 1px solid #aaa; \
+    } \
     #songberg_container #main { \
-      margin: 18px 0 0 18px; \
+      height: 100%; \
+      margin: 50px 0 0 18px; \
     } \
     #songberg_container .toggle_button, #songberg_container .message { \
       margin: 10px 0 0 20px; \
       background-color: #40BBF2; \
-      display: inline-block; \
+      display: block; \
+      float: right; \
       padding: 4px 10px; \
       color: white; \
       font-weight: bold; \
@@ -55,6 +95,7 @@ function injectCss() {
     } \
     #songberg_container .toggle_button { \
       cursor: pointer; \
+      width: 100px; \
     } \
     #songberg_container pre { \
       height: 90%; \
@@ -98,7 +139,7 @@ function findSong() {
   if (typeof title === "string") {
     injectCss();
     console.log(document.URL);
-    $.get("http://dev.songberg.com:3000/api/v1/songs/search?query="+encodeURI(title)+"&video_url="+document.URL, 
+    $.get("http://dev.songberg.com:3000/api/v1/songs/search?query="+encodeURI(title)+"&video_url="+escape(document.URL), 
         function(data) {
         var jsonData = $.parseJSON(data);
         if (jsonData == null || jsonData.song == null) {
@@ -120,24 +161,25 @@ function findSong() {
             $('.toggle_button').toggle(
               function() {
                 $(this).text('hide');
-                $('#songberg_container').animate({ height: '100%', width: '25%'});
+                $('#songberg_container').animate({ 'height': '100%', 'width': '25%'}).addClass('styled');
                 $('#main').removeClass('hidden');
               },
               function() {
                 $(this).text('is this a song?');
-                $('#songberg_container').animate({ height: '0px', width: '60px'});
+                $('#songberg_container').animate({ height: '40px', width: '60px'}).removeClass('styled');
                 $('#main').addClass('hidden');
               }
             );
             
             $('#request_form').submit(function(){
               var title = $('#input_artist_name').val() + ' ' + $('#input_song_title').val();
-              $.get("http://dev.songberg.com:3000/api/v1/songs/search?query="+encodeURI(title)+"&video_url="+document.URL, 
+              $.get("http://dev.songberg.com:3000/api/v1/songs/search?query="+encodeURI(title)+"&video_url="+escape(document.URL), 
                 function(data) {
                   var jsonData = $.parseJSON(data);
                   
                   if (jsonData && jsonData.song && jsonData.song.content != null) {
                     $('#songberg_container #main').html("<pre>"+jsonData.song.content+"</pre>");
+                    $('#songberg_container .toggle_button').text('hide lyrics');
                   } else {
                     $('#songberg_container #main').html("<p>sorry, still can't find it.</p>");
                   }
@@ -153,16 +195,18 @@ function findSong() {
         } else {
           $('body').append("<div id='songberg_container'> \
             <a class='toggle_button'>show lyrics</a> \
-            <pre>"+jsonData.song.content+"</pre></div>");
+            <div id='main' class='hidden'><pre>"+jsonData.song.content+"</pre></div></div>");
         
           $('.toggle_button').toggle(
             function() {
               $(this).text('hide lyrics');
-              $('#songberg_container').animate({ height: '100%', width: '25%'});
+              $('#songberg_container').animate({ height: '100%', width: '25%'}).addClass('styled');
+              $('#main').removeClass('hidden');
             },
             function() {
               $(this).text('show lyrics');
-              $('#songberg_container').animate({ height: '0px', width: '60px'});
+              $('#songberg_container').animate({ height: '40px', width: '60px'}).removeClass('styled');
+              $('#main').addClass('hidden');
             }
           );
         }
